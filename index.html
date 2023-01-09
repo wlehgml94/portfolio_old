@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/style.css">
+    <title>DOHEE JI</title>
+</head>
+<body>
+    <div id="wrap">
+        <div class="main">
+            <div class="container">
+                <h2>Nice To Meet you</h2>
+                <h1>My name is JI Dohee</h1>
+            </div>
+  
+  <script id="vertShader" type="text">
+  
+  // attributes, in
+  attribute vec3 aPosition;
+  
+  // matrices
+  uniform mat4 uModelViewMatrix;
+  uniform mat4 uProjectionMatrix;
+  
+  void main() {
+    gl_Position = uProjectionMatrix * uModelViewMatrix * vec4(aPosition, 1.0);
+  }
+  </script>
+  
+  <script id="fragShader" type="text">
+  #ifdef GL_ES
+  precision highp float;
+  #endif
+  
+  uniform float uTime;
+  uniform float uSpeedColor;
+  uniform vec2 uResolution;
+    
+  uniform vec3 uColor1;
+  uniform vec3 uColor2;
+  uniform vec3 uColor3;
+  uniform vec3 uColor4;
+  uniform vec3 uColor5;
+  
+  const int AMOUNT = 2;
+  const float scale = 2.0;
+  
+    
+  vec3 blendExclusion(vec3 base, vec3 blend) {
+      return base+blend-2.0*base*blend;
+  }
+  
+  vec3 blendExclusion(vec3 base, vec3 blend, float opacity) {
+      return (blendExclusion(base, blend) * opacity + base * (1.0 - opacity));
+  }
+    
+  float blendLighten(float base, float blend) {
+      return max(blend,base);
+  }
+  
+  vec3 blendLighten(vec3 base, vec3 blend) {
+      return vec3(blendLighten(base.r,blend.r),blendLighten(base.g,blend.g),blendLighten(base.b,blend.b));
+  }
+  
+  vec3 blendLighten(vec3 base, vec3 blend, float opacity) {
+      return (blendLighten(base, blend) * opacity + base * (1.0 - opacity));
+  }
+    
+  float blendDarken(float base, float blend) {
+      return min(blend,base);
+  }
+  
+  vec3 blendDarken(vec3 base, vec3 blend) {
+      return vec3(blendDarken(base.r,blend.r),blendDarken(base.g,blend.g),blendDarken(base.b,blend.b));
+  }
+  
+  vec3 blendDarken(vec3 base, vec3 blend, float opacity) {
+      return (blendDarken(base, blend) * opacity + base * (1.0 - opacity));
+  }
+  
+  float blendPinLight(float base, float blend) {
+      return (blend<0.5)?blendDarken(base,(2.0*blend)):blendLighten(base,(2.0*(blend-0.5)));
+  }
+  
+  vec3 blendPinLight(vec3 base, vec3 blend) {
+      return vec3(blendPinLight(base.r,blend.r),blendPinLight(base.g,blend.g),blendPinLight(base.b,blend.b));
+  }
+  
+  vec3 blendPinLight(vec3 base, vec3 blend, float opacity) {
+      return (blendPinLight(base, blend) * opacity + base * (1.0 - opacity));
+  }
+    
+    
+  float blendOverlay(float base, float blend) {
+      return base<0.5?(2.0*base*blend):(1.0-2.0*(1.0-base)*(1.0-blend));
+  }
+  
+  vec3 blendOverlay(vec3 base, vec3 blend) {
+      return vec3(blendOverlay(base.r,blend.r),blendOverlay(base.g,blend.g),blendOverlay(base.b,blend.b));
+  }
+  
+  vec3 blendOverlay(vec3 base, vec3 blend, float opacity) {
+      return (blendOverlay(base, blend) * opacity + base * (1.0 - opacity));
+  }
+  
+  float blendLinearDodge(float base, float blend) {
+      // Note : Same implementation as BlendAddf
+      return min(base+blend,1.0);
+  }
+  
+  vec3 blendLinearDodge(vec3 base, vec3 blend) {
+      // Note : Same implementation as BlendAdd
+      return min(base+blend,vec3(1.0));
+  }
+  
+  vec3 blendLinearDodge(vec3 base, vec3 blend, float opacity) {
+      return (blendLinearDodge(base, blend) * opacity + base * (1.0 - opacity));
+  }
+  
+    
+  float blendLinearBurn(float base, float blend) {
+      // Note : Same implementation as BlendSubtractf
+      return max(base+blend-1.0,0.0);
+  }
+  
+  vec3 blendLinearBurn(vec3 base, vec3 blend) {
+      // Note : Same implementation as BlendSubtract
+      return max(base+blend-vec3(1.0),vec3(0.0));
+  }
+  
+  vec3 blendLinearBurn(vec3 base, vec3 blend, float opacity) {
+      return (blendLinearBurn(base, blend) * opacity + base * (1.0 - opacity));
+  }
+    
+  float blendLinearLight(float base, float blend) {
+      return blend<0.5?blendLinearBurn(base,(2.0*blend)):blendLinearDodge(base,(2.0*(blend-0.5)));
+  }
+  
+  vec3 blendLinearLight(vec3 base, vec3 blend) {
+      return vec3(blendLinearLight(base.r,blend.r),blendLinearLight(base.g,blend.g),blendLinearLight(base.b,blend.b));
+  }
+  
+  vec3 blendLinearLight(vec3 base, vec3 blend, float opacity) {
+      return (blendLinearLight(base, blend) * opacity + base * (1.0 - opacity));
+  }
+    
+    
+  float blendScreen(float base, float blend) {
+      return 1.0-((1.0-base)*(1.0-blend));
+  }
+  
+  vec3 blendScreen(vec3 base, vec3 blend) {
+      return vec3(blendScreen(base.r,blend.r),blendScreen(base.g,blend.g),blendScreen(base.b,blend.b));
+  }
+  
+  vec3 blendScreen(vec3 base, vec3 blend, float opacity) {
+      return (blendScreen(base, blend) * opacity + base * (1.0 - opacity));
+  }
+  
+  float rand(vec2 co){
+      return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+  }
+    
+  //lengths
+  
+  float createLen() {
+    float time = 10.0 + uTime / 1.0; 
+    
+    vec2 coord = scale * (gl_FragCoord.xy - uResolution.xy) / min(uResolution.y, uResolution.x);
+  
+    float len;
+    for(int i = 0; i < AMOUNT; i++) {
+      len = length(vec2(coord.x, coord.y));
+  
+      coord.x = coord.x + cos(coord.y - sin(len)) - cos(time / 9.1);
+      coord.y = coord.y + sin(coord.y + cos(len)) + sin(time / 12.0);
+    }
+    
+    return len;
+  }
+    
+  float createLen2(float x,  float y, float speed, float offset) {
+    float time = offset + uTime / speed; 
+    
+    vec2 coord =  scale * (gl_FragCoord.xy - uResolution.xy) / min(uResolution.y, uResolution.x);
+    
+    float len;
+    
+    for(int i = 0; i < AMOUNT; i++) {
+      len = length(vec2(coord.x, coord.y));
+      coord.x = coord.x + sin(coord.y + cos(len) * cos(len)) + sin(time / x);
+      coord.y = coord.y - cos(coord.y + sin(len) * sin(len)) + cos(time / y);
+    }
+    
+    return len;
+  }
+  
+  float createLen3(float x,  float y, float speed, float offset) {
+    float time = offset + uTime / speed; 
+    
+    vec2 coord = scale * (gl_FragCoord.xy - uResolution.xy) / min(uResolution.y, uResolution.x);
+  
+    float len;
+    
+    for(int i = 0; i < AMOUNT; i++) {
+      len = length(vec2(coord.x, coord.y));
+      
+      //coord.x = coord.x - cos(coord.y + sin(len)) + cos(time / x);
+      coord.y = coord.y + sin(coord.y + cos(len)) + sin(time / y);
+    }
+    
+    return len;
+  }
+  
+  float createLen4(float x,  float y, float speed, float offset) {
+    float time = offset + uTime / speed; 
+    
+    vec2 coord = scale * (gl_FragCoord.xy - uResolution.xy) / min(uResolution.y, uResolution.x);
+  
+    float len;
+    
+    for(int i = 0; i < AMOUNT; i++) {
+      len = length(vec2(coord.x, coord.y));
+      
+      coord.x = coord.x - cos(coord.y + sin(len)) + cos(time / x);
+      //coord.y = coord.y + sin(coord.y + cos(len)) + sin(time / y);
+    }
+    
+    return len;
+  }
+    
+  vec3 createCircle(vec2 position, vec3 color, float size, float blur) {
+    vec2 pos = (gl_FragCoord.xy - uResolution.xy) / min(uResolution.y, uResolution.x) - position;
+    float circle = sqrt(pow(pos.x, 3.0) + pow(pos.y, 2.0));
+    circle = smoothstep(size, size + blur, 1.0 - circle);
+    return color * circle;
+  }
+    
+  vec3 rgb2hsv(vec3 c)
+  {
+      vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+      vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+      vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+  
+      float d = q.x - min(q.w, q.y);
+      float e = 1.0e-10;
+      return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+  }
+  
+  vec3 hsv2rgb(vec3 c)
+  {
+      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+  }
+    
+  void main() {
+      vec2 coord = scale * (gl_FragCoord.xy - uResolution.xy) / min(uResolution.y, uResolution.x);
+  
+    float len = createLen();
+    float len2 = createLen2(10.0, 10.0, 8.0, 20.0);
+    float len3 = createLen3(2.0, 2.0, 10.0, 30.0);
+    float len4 = createLen4(5.0, 20.0, 5.0, 40.0);
+  
+    vec3 blue = uColor1 + cos(len) * 0.25 + 0.25;
+    
+    vec3 turquoise = uColor2 + cos(len2) * 0.5 + 0.75;
+  
+    /*
+    vec2 pos = vec2(sin(uTime * 0.01 * sin(uTime * 0.001)), cos(uTime * 0.002));
+    float radius = 0.5 + cos(uTime * 0.01) * 0.1;
+    vec3 turquoise = createCircle(pos, uColor2, radius, 0.5);
+  
+    vec2 pos2 = vec2(cos(-uTime * 0.01), sin(-uTime * 0.03 * sin(-uTime * 0.001)));
+    float radius2 = 0.3 + cos(uTime * 0.01) * 0.01;
+    turquoise += createCircle(pos2, uColor2, radius2, 0.75);
+    */
+    
+    vec3 pink = uColor3 + cos(len3) * 0.5 + 0.75;
+    vec3 peach = uColor4 + cos(len4) * 0.75 + 0.95;
+    
+    float pinkValue = min(1.0, max(0.0, 1.2 - (pink[0] / 1.2)));
+    
+    float peachValue = min(1.0, max(0.0, 1.5 - (peach[0] / 1.2)));
+  
+    float turquoiseValue = min(1.0, max(0.0, 1.5 - (turquoise[2] / 1.1)));
+  
+    vec3 blend = blue;
+    blend = mix(blend, turquoise, turquoiseValue);
+    blend = mix(blend, peach, peachValue);
+    blend = mix(blend, pink, pinkValue);
+  
+    //blend += turquoise;
+    //blend += torquoise;
+    //blend = blendDarken(blend, pink);
+    //blend = blendLinearBurn(blend, peach);
+  
+    vec3 lightercolor = blendLinearBurn(blend, peach);
+    blend = mix(blend, lightercolor, max(1.0 - lightercolor[0], 0.0));
+    
+    blend = blendOverlay(blend, vec3(0.0, 0.0, 0.0));
+  
+    vec3 color = blend;
+    
+    float r = color[0];
+    float g = color[1];
+    float b = color[2];
+  
+    vec3 hsb = rgb2hsv(vec3(r, g, b));
+    hsb[1] -= rand(coord) * 0.15;
+    vec3 rgb = hsv2rgb(hsb);
+    
+    gl_FragColor = vec4(rgb, 1.0);
+  }
+  </script>
+  <!-- partial -->
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.3.1/p5.min.js'></script><script  src="./script.js"></script>
+  
+        </div>
+        <div class="container about">
+			<div class="content">
+				<div class="txt">
+					<h3>#톺아보기 👀</h3>
+					<p>MBTI : <strong>INFP 열정적인 중재자</strong><br>잔다르크형 답게 차분하고 수줍음이 많은 사람처럼 보이지만, <br>마음 속엔 언제라도 타오를 수 있는 불꽃이 숨어있습니다.</p>
+					<p>전공을 예체능과 문과생 그 사이에 있는 <strong>문예창작</strong>을 전공했는데, <br>어쩌다 보니 디자이너와 개발자 그 사이에 있는 <strong>퍼블리셔</strong>로 일하고 있습니다. <br>무언가 사이에 있다는 것은 참으로 애매하지만<br>그 두 가지 모두를 이해할 수 있다는 뜻이죠.<br>항상 애매한 그 틈 사이를 비집고 싶습니다.</p>
+					<p>2016년 5월부터 2022년 현재(11월)까지 총 6년 동안 퍼블리싱을 하고 있습니다. <br><strong>[핀스퀘어]</strong>에서 웹 퍼블리셔로 일했고, <br><strong>[플러스에이]</strong>에서 퍼블리싱을 했고, 현재는 <strong>[패스트파이브]</strong>에서 일하고 있습니다.</p>
+                    <p>포토샵, 일러스트, 제플린, xd, 피그마 등을 사용해 작업을 했습니다. <br>html과 css, javascript, jqeury를 이용해 퍼블리싱을 합니다.</p>
+                </div>
+				<div class="total_wrap">
+					<ul class="total">
+						<li>
+							<h2>FASTFIVE</h2>
+							<em>7 MONTH</em>
+							<span>2022.4 - 2022.11 퍼블리셔로 근무중</span>
+						</li>
+						<li>
+							<h2>+ PLUS X ADVANCE LAB</h2>
+							<em>2,6 YEAR</em>
+							<span>2019.8 - 2022.3 퍼블리셔로 근무</span>
+						</li>
+						<li>
+							<h2>+ PINSQUARE</h2>
+							<em>2,8 YEAR</em>
+							<span>2016.5 - 2019.1 퍼블리셔로 근무</span>
+						</li>
+						<li class="total">
+							<h2>= TOTAL</h2>
+							<em>6 YEAR</em>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+        <div class="container work">
+            <div class="txt">
+                <h3>Projects👩🏻‍💻</h3>
+            </div>
+            <ul>
+            <li>
+               <div class="chrome-bar">
+                <section class="tab-section">
+                    <div class="window-btn">
+                    <div class="btn"></div>
+                    <div class="btn"></div>
+                    <div class="btn"></div>
+                    </div>
+                    <div class="tab-container">
+                    <div class="tab">
+                        <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                        <h6 class="tab-name">APARTMETARY</h6>
+                        <div class="close-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="add-tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    </div>
+                </section>
+                <section class="url-section">
+                    <div class="page-btn">
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </div>
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </div>
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </div>
+                    </div>
+                    <div class="url-bar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="url" placeholder="Search Google or type a URL">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    </div>
+                    <div class="menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                    </svg>
+                    </div>
+                </section>
+                </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <image opacity="1" mask="url('#myMask4')" preserveAspectRatio="xMidYMid slice" href="img/img_apart.png" height="100%" width="100%"></image>
+                        <mask id="myMask4">
+                    
+                    <path fill="#fff" d="M28.2,-30.9C36.3,-26.7,42.7,-17.7,42.6,-8.9C42.4,-0.2,35.6,8.2,29.9,16.4C24.2,24.6,19.5,32.6,12.3,36.3C5.1,40,-4.5,39.4,-11.5,35.3C-18.5,31.1,-23,23.5,-27.5,15.8C-32,8.1,-36.6,0.4,-36.4,-7.4C-36.2,-15.3,-31.3,-23.3,-24.4,-27.7C-17.6,-32.2,-8.8,-32.9,0.6,-33.6C10,-34.4,20,-35,28.2,-30.9Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                    
+                        </mask>
+                    </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>APARTMETARY</h4>
+                        <p>Web Publishing</p>
+                        <a href="https://apartmentary.com/" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2020</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+               <div class="chrome-bar">
+                    <section class="tab-section">
+                        <div class="window-btn">
+                        <div class="btn"></div>
+                        <div class="btn"></div>
+                        <div class="btn"></div>
+                        </div>
+                        <div class="tab-container">
+                        <div class="tab">
+                            <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                            <h6 class="tab-name">PLUS X OBJECT</h6>
+                            <div class="close-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="add-tab">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        </div>
+                    </section>
+                    <section class="url-section">
+                        <div class="page-btn">
+                        <div class="btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                        </div>
+                        <div class="btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </div>
+                        <div class="btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <div class="btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                        </div>
+                        </div>
+                        <div class="url-bar">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="url" placeholder="Search Google or type a URL">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        </div>
+                        <div class="menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                        </svg>
+                        </div>
+                    </section>
+                </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                       
+                        <image opacity="1" mask="url('#myMask5')" preserveAspectRatio="xMidYMid slice" href="img/img_plus_o.png" height="100%" width="100%"></image>
+                        <mask id="myMask5">
+                    <path fill="#fff" d="M21.9,-25.7C30,-19.3,39.3,-13.9,41.5,-6.6C43.7,0.8,38.7,10.1,33.3,19C27.9,27.9,22.1,36.4,14.5,38.6C6.9,40.8,-2.5,36.7,-11.8,33.1C-21.2,29.4,-30.5,26.2,-35.3,19.6C-40.2,12.9,-40.5,2.9,-38.9,-6.9C-37.2,-16.7,-33.6,-26.2,-26.8,-32.9C-20,-39.6,-10,-43.4,-1.5,-41.6C6.9,-39.7,13.8,-32.2,21.9,-25.7Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                            </mask>
+                     </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>PLUS X OBJECT</h4>
+                        <p>Web Publishing</p>
+                        <a href="https://object.plus-ex.com/" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2019</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="chrome-bar">
+                 <section class="tab-section">
+                     <div class="window-btn">
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     </div>
+                     <div class="tab-container">
+                     <div class="tab">
+                         <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                         <h6 class="tab-name">Fossula</h6>
+                         <div class="close-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                         </svg>
+                         </div>
+                     </div>
+                     </div>
+                     <div class="add-tab">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                     </svg>
+                     </div>
+                 </section>
+                 <section class="url-section">
+                     <div class="page-btn">
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                         </svg>
+                     </div>
+                     </div>
+                     <div class="url-bar">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                     </svg>
+                     <input type="url" placeholder="Search Google or type a URL">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                     </svg>
+                     </div>
+                     <div class="menu">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                     </svg>
+                     </div>
+                 </section>
+                 </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <image opacity="1" mask="url('#myMask3')" preserveAspectRatio="xMidYMid slice" href="img/img_fossula.png" height="100%" width="100%"></image>
+                        <mask id="myMask3">
+                    
+                    <path fill="#fff" d="M27.1,-30C34.6,-26.1,39.5,-17,41.3,-7.3C43,2.5,41.5,12.8,36.7,21.4C32,30,23.9,36.9,14.7,40C5.5,43.1,-4.9,42.5,-13.8,38.9C-22.8,35.2,-30.3,28.5,-32.9,20.6C-35.5,12.7,-33.2,3.6,-31.9,-5.9C-30.5,-15.4,-30.1,-25.4,-24.9,-29.6C-19.8,-33.9,-9.9,-32.4,0,-32.3C9.9,-32.3,19.7,-33.8,27.1,-30Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                            </mask>
+                </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>Fossula</h4>
+                        <p>Web Publishing</p>
+                        <a href="https://fossula.com/" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2020</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="chrome-bar">
+                 <section class="tab-section">
+                     <div class="window-btn">
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     </div>
+                     <div class="tab-container">
+                     <div class="tab">
+                         <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                         <h6 class="tab-name">FIVEAD</h6>
+                         <div class="close-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                         </svg>
+                         </div>
+                     </div>
+                     </div>
+                     <div class="add-tab">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                     </svg>
+                     </div>
+                 </section>
+                 <section class="url-section">
+                     <div class="page-btn">
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                         </svg>
+                     </div>
+                     </div>
+                     <div class="url-bar">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                     </svg>
+                     <input type="url" placeholder="Search Google or type a URL">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                     </svg>
+                     </div>
+                     <div class="menu">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                     </svg>
+                     </div>
+                 </section>
+                 </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <image opacity="1" mask="url('#myMask')" preserveAspectRatio="xMidYMid slice" href="img/img_fivead.png" height="100%" width="100%"></image>
+                        <mask id="myMask">
+                            <path fill="#fff" d="M25.1,-30.2C31.4,-24.7,34.4,-15.6,36.1,-6.3C37.8,3,38.1,12.6,34.5,20.9C30.9,29.2,23.3,36.2,14.5,39.2C5.6,42.2,-4.5,41.2,-13,37.4C-21.4,33.6,-28.2,26.9,-33.9,18.7C-39.6,10.6,-44.2,1,-41.8,-6.4C-39.3,-13.8,-29.8,-19,-21.7,-24.2C-13.6,-29.4,-6.8,-34.5,1.3,-36.1C9.4,-37.7,18.9,-35.7,25.1,-30.2Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                        </mask>
+                    </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>FIVEAD</h4>
+                        <p>Web Publishing</p>
+                        <a href="http://www.fivead.co.kr" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2022</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+               <div class="chrome-bar">
+                <section class="tab-section">
+                    <div class="window-btn">
+                    <div class="btn"></div>
+                    <div class="btn"></div>
+                    <div class="btn"></div>
+                    </div>
+                    <div class="tab-container">
+                    <div class="tab">
+                        <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                        <h6 class="tab-name">ETIQA</h6>
+                        <div class="close-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                        </div>
+                    </div>
+                    </div>
+                    <div class="add-tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    </div>
+                </section>
+                <section class="url-section">
+                    <div class="page-btn">
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        </svg>
+                    </div>
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                    </div>
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <div class="btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </div>
+                    </div>
+                    <div class="url-bar">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="url" placeholder="Search Google or type a URL">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    </div>
+                    <div class="menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                    </svg>
+                    </div>
+                </section>
+                </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <image opacity="1" mask="url('#myMask')" preserveAspectRatio="xMidYMid slice" href="img/img_etiqa.png" height="100%" width="100%"></image>
+                        <mask id="myMask">
+                            <path fill="#fff" d="M25.1,-30.2C31.4,-24.7,34.4,-15.6,36.1,-6.3C37.8,3,38.1,12.6,34.5,20.9C30.9,29.2,23.3,36.2,14.5,39.2C5.6,42.2,-4.5,41.2,-13,37.4C-21.4,33.6,-28.2,26.9,-33.9,18.7C-39.6,10.6,-44.2,1,-41.8,-6.4C-39.3,-13.8,-29.8,-19,-21.7,-24.2C-13.6,-29.4,-6.8,-34.5,1.3,-36.1C9.4,-37.7,18.9,-35.7,25.1,-30.2Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                        </mask>
+                    </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>ETIQA</h4>
+                        <p>Web Publishing</p>
+                        <a href="http://www.etiqa.co.kr/index.html" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2019</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="chrome-bar">
+                 <section class="tab-section">
+                     <div class="window-btn">
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     </div>
+                     <div class="tab-container">
+                     <div class="tab">
+                         <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                         <h6 class="tab-name">WONJIN</h6>
+                         <div class="close-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                         </svg>
+                         </div>
+                     </div>
+                     </div>
+                     <div class="add-tab">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                     </svg>
+                     </div>
+                 </section>
+                 <section class="url-section">
+                     <div class="page-btn">
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                         </svg>
+                     </div>
+                     </div>
+                     <div class="url-bar">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                     </svg>
+                     <input type="url" placeholder="Search Google or type a URL">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                     </svg>
+                     </div>
+                     <div class="menu">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                     </svg>
+                     </div>
+                 </section>
+                 </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <image opacity="1" mask="url('#myMask2')" preserveAspectRatio="xMidYMid slice" href="img/img_wonjin.png" height="100%" width="100%"></image>
+                        <mask id="myMask2">
+                    <path fill="#fff" d="M28.2,-30.9C36.3,-26.7,42.7,-17.7,42.6,-8.9C42.4,-0.2,35.6,8.2,29.9,16.4C24.2,24.6,19.5,32.6,12.3,36.3C5.1,40,-4.5,39.4,-11.5,35.3C-18.5,31.1,-23,23.5,-27.5,15.8C-32,8.1,-36.6,0.4,-36.4,-7.4C-36.2,-15.3,-31.3,-23.3,-24.4,-27.7C-17.6,-32.2,-8.8,-32.9,0.6,-33.6C10,-34.4,20,-35,28.2,-30.9Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                            </mask>
+                </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>WONJIN PLASTIC SURGERY</h4>
+                        <p>Web Publishing</p>
+                        <a href="http://www.k-wonjin.co.kr/" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2019</span>
+                    </div>
+                </div>
+            </li>
+            <li>
+                <div class="chrome-bar">
+                 <section class="tab-section">
+                     <div class="window-btn">
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     <div class="btn"></div>
+                     </div>
+                     <div class="tab-container">
+                     <div class="tab">
+                         <img src="https://img.freepik.com/free-icon/link-metal-chain_318-9063.jpg" alt="" width="20" height="20">
+                         <h6 class="tab-name">KCOMSCO</h6>
+                         <div class="close-btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                         </svg>
+                         </div>
+                     </div>
+                     </div>
+                     <div class="add-tab">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                     </svg>
+                     </div>
+                 </section>
+                 <section class="url-section">
+                     <div class="page-btn">
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                         </svg>
+                     </div>
+                     <div class="btn">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                         </svg>
+                     </div>
+                     </div>
+                     <div class="url-bar">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+                     </svg>
+                     <input type="url" placeholder="Search Google or type a URL">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                     </svg>
+                     </div>
+                     <div class="menu">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd" />
+                     </svg>
+                     </div>
+                 </section>
+                 </div>
+                <div class="port_thumb">
+                    <svg id="sw-js-blob-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <image opacity="1" mask="url('#myMask2')" preserveAspectRatio="xMidYMid slice" href="img/img_app.png" height="100%" width="100%"></image>
+                        <mask id="myMask2">
+                    <path fill="#fff" d="M28.2,-30.9C36.3,-26.7,42.7,-17.7,42.6,-8.9C42.4,-0.2,35.6,8.2,29.9,16.4C24.2,24.6,19.5,32.6,12.3,36.3C5.1,40,-4.5,39.4,-11.5,35.3C-18.5,31.1,-23,23.5,-27.5,15.8C-32,8.1,-36.6,0.4,-36.4,-7.4C-36.2,-15.3,-31.3,-23.3,-24.4,-27.7C-17.6,-32.2,-8.8,-32.9,0.6,-33.6C10,-34.4,20,-35,28.2,-30.9Z" width="100%" height="100%" transform="translate(50 50)" stroke-width="0" style="transition: all 10s ease 0s;"></path>
+                            </mask>
+                </svg>
+                </div>
+                <div class="port_con">
+                    <div>
+                        <h4>KCOMSCO</h4>
+                        <p>UX</p>
+                        <a href="https://drive.google.com/file/d/1J_oLrAOt4IJ257D2eFaKbI-NiNfvYFuY/view?usp=sharing" target="_blank" class="button" cursor-class="overlay">Visit Project</a>
+                        <span>website / 2018</span>
+                    </div>
+                </div>
+            </li>
+            </ul>
+        </div>
+        <div class="container footer">
+            <h3>Contact📞</h3>
+            <dl>
+                <dt>Social</dt>
+                <dd><a href="https://www.instagram.com/jidohee/">Instagram</a></dd>
+            </dl>
+            <dl>
+                <dt>Email</dt>
+                <dd><a href="mailto:wlehgml94@naver.com">wlehgml94@naver.com</a></dd>
+            </dl>
+            <dl>
+                <dt>Phone</dt>
+                <dd><a href="tel:01086709408">01086709408</a></dd>
+            </dl>
+        </div>
+    </div>
+
+<div id="cursor">
+    <div class="cursor__inner"></div>
+</div>
+  <script src="js/script.js"></script>
+</body>
+</html>
