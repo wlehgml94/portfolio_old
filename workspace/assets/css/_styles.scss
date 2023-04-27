@@ -1,0 +1,119 @@
+@charset 'utf-8';
+
+//setColor
+$c_00: #000;
+$c_22: #222;
+$c_77: #777;
+$c_97: #979797;
+$c_d9: #d0d0d0;
+$c_f4: #f4f4f4;
+$c_ff: #fff;
+$c_c9: #ecebe9;
+$c_42: #424242;
+$c_point: #e99ac6;
+
+//imageUrl
+$images: '../img/';
+$fonts: '../fonts/';
+
+//size
+$maxContent: 120rem;
+$moSize: 960px;
+$padding: 5rem;
+
+//title
+@mixin title($h) {
+  @if ($h == '64') {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 6.4rem;
+    line-height: 7.2rem;
+    font-weight: 800;
+    letter-spacing: -.1rem;
+  } @else if ($h == '36') {
+    font-size: 3.6rem;
+    line-height: 5rem;
+    font-weight: 600;
+    letter-spacing: -.1rem;
+  } @else if ($h == '28') {
+    font-size: 2.8rem;
+    line-height: 4.2rem;
+    font-weight: 600;
+  } @else if ($h == '24') {
+    font-size: 2.4rem;
+    line-height: 3.4rem;
+    font-weight: 500;
+  }
+  @media screen and (max-width: $moSize) {
+    @if ($h == '38') {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 3.8rem;
+      line-height: 4.4rem;
+      font-weight: 800;
+      letter-spacing: -.05rem;
+    } @else if ($h == '36') {
+      font-size: 3.6rem;
+      line-height: 5rem;
+      font-weight: 600;
+      letter-spacing: -.05rem;
+    }  @else if ($h == '22') {
+      font-size: 2.2rem;
+      line-height: 3.4rem;
+      font-weight: 600;
+    } @else if ($h == '16') {
+      font-size: 1.6rem;
+      line-height: 3rem;
+      font-weight: 600;
+    }
+  }
+}
+//text
+@mixin text($b, $bold: 400) {
+  @if ($b == '28') {
+    font-size: 2.8rem;
+    line-height: 4.4rem;
+    font-weight: $bold;
+  } @else if ($b == '20') {
+    @if ($bold == 400) {
+      $bold: 500;
+    }
+    font-size: 2rem;
+    line-height: 2.8rem;
+    font-weight: $bold;
+  } @else if ($b == '16') {
+    @if ($bold == 400) {
+      $bold: 500;
+    }
+    font-size: 1.6rem;
+    line-height: 1.9rem;
+    font-weight: $bold;
+  } @else if ($b == '12') {
+    @if ($bold == 400) {
+      $bold: 500;
+    }
+    font-size: 1.2rem;
+    line-height: 1.6rem;
+    font-weight: $bold;
+  }
+  @media screen and (max-width: $moSize) {
+    @if ($b == '28') {
+      font-size: 2.8rem;
+      line-height: 4.4rem;
+      font-weight: $bold;
+    } @else if ($b == '16') {
+      font-size: 1.6rem;
+      line-height: 2.6rem;
+      font-weight: $bold;
+    } @else if ($b == '12') {
+      font-size: 1.2rem;
+      line-height: 1.8rem;
+      font-weight: $bold;
+    }
+  }
+}
+@mixin blind {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  z-index: -1;
+}
